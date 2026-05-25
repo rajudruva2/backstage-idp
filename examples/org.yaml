@@ -1,17 +1,30 @@
----
-# https://backstage.io/docs/features/software-catalog/descriptor-format#kind-user
+# User Entity
 apiVersion: backstage.io/v1alpha1
 kind: User
+
 metadata:
-  name: guest
+  name: rajudruva2
+
 spec:
-  memberOf: [guests]
+  profile:
+    displayName: Raj Kumar
+    email: rajudruva2@gmail.com
+
+  memberOf:
+    - admins
+
 ---
-# https://backstage.io/docs/features/software-catalog/descriptor-format#kind-group
+# Group Entity
 apiVersion: backstage.io/v1alpha1
 kind: Group
+
 metadata:
-  name: guests
+  name: admins
+
 spec:
   type: team
+
+  profile:
+    displayName: Platform Admin Team
+
   children: []
