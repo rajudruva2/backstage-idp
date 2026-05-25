@@ -3,7 +3,7 @@ name: Backstage CI-CD
 on:
   push:
     branches:
-      - master
+      - mast
 
 jobs:
   build-and-deploy:
