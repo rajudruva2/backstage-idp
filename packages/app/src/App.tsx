@@ -1,4 +1,3 @@
-
 import { createApp } from '@backstage/frontend-defaults';
 import catalogPlugin from '@backstage/plugin-catalog/alpha';
 import { navModule } from './modules/nav';
@@ -13,6 +12,7 @@ const signInPage = SignInPageBlueprint.make({
     loader: async () => props => (
       <SignInPage
         {...props}
+        auto
         provider={{
           id: 'github-auth-provider',
           title: 'GitHub',
