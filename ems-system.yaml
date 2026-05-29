@@ -1,0 +1,9 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+
+metadata:
+  name: ems-platform
+  description: Employee Management System
+
+spec:
+  owner: user:default/rajudruva2
