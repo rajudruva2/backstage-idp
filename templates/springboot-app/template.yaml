@@ -1,1 +1,43 @@
 
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+
+metadata:
+  name: springboot-app
+  title: Spring Boot Application
+  description: Create a Spring Boot application
+
+spec:
+  owner: platform-team
+  type: service
+
+  parameters:
+    - title: Application Information
+      required:
+        - appName
+
+      properties:
+        appName:
+          title: Application Name
+          type: string
+
+  steps:
+    - id: fetch
+      name: Fetch Template
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          appName: ${{ parameters.appName }}
+
+    - id: publish
+      name: Publish Repository
+      action: publish:github
+      input:
+        repoUrl: github.com?owner=rajudruva2&repo=${{ parameters.appName }}
+        defaultBranch: main
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
