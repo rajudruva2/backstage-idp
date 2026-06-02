@@ -1,14 +1,17 @@
-
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 
 metadata:
   name: springboot-app
   title: Spring Boot Application
-  description: Create a Spring Boot application
+  description: Create a Spring Boot application repository
+  tags:
+    - java
+    - springboot
+    - kubernetes
 
 spec:
-  owner: platform-team
+  owner: user:guest
   type: service
 
   parameters:
@@ -20,24 +23,41 @@ spec:
         appName:
           title: Application Name
           type: string
+          description: Name of the GitHub repository and application
 
   steps:
     - id: fetch
       name: Fetch Template
       action: fetch:template
+
       input:
         url: ./skeleton
+
         values:
           appName: ${{ parameters.appName }}
 
     - id: publish
       name: Publish Repository
       action: publish:github
+
       input:
         repoUrl: github.com?owner=rajudruva2&repo=${{ parameters.appName }}
         defaultBranch: main
+        description: Spring Boot application created from Backstage
+
+    - id: register
+      name: Register Catalog
+      action: catalog:register
+
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
 
   output:
     links:
       - title: Repository
         url: ${{ steps.publish.output.remoteUrl }}
+
+      - title: Open in Catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}
