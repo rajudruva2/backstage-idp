@@ -3,7 +3,7 @@ kind: Component
 
 metadata:
   name: ${{ values.appName }}
-
+  description: Spring Boot Application
 spec:
   type: service
   lifecycle: production
