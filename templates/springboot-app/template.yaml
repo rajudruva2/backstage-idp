@@ -33,7 +33,7 @@ spec:
       name: Fetch Template
       action: fetch:template
       input:
-        url: ./skeleton
+        url: https://github.com/rajudruva2/backstage-idp/tree/main/templates/springboot-app/skeleton
         values:
           appName: ${{ parameters.appName }}
 
