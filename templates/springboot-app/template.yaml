@@ -9,9 +9,9 @@ metadata:
     - java
     - springboot
     - kubernetes
-annotations:
-    backstage.io/source-location: url:https://github.com/rajudruva2/backstage-idp/tree/main/templates/springboot-app
-    backstage.io/managed-by-location: url:https://github.com/rajudruva2/backstage-idp/tree/main/templates/springboot-app
+  annotations:
+     backstage.io/source-location: url:https://github.com/rajudruva2/backstage-idp/tree/main/templates/springboot-app
+     backstage.io/managed-by-location: url:https://github.com/rajudruva2/backstage-idp/tree/main/templates/springboot-app
 spec:
   owner: user:guest
   type: service
