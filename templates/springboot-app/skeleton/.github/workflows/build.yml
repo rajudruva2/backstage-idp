@@ -50,10 +50,7 @@ jobs:
           docker build \
             -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-${IMAGE_TAG} \
             -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-latest .
-      - name: Verify Git Remote
-        run: |
-            cd eks-gitops-config
-            git remote -v      
+           
       - name: Verify GitHub Token
         run: |
             curl -H "Authorization: token ${{ secrets.GITOPS_TOKEN }}" \
@@ -67,7 +64,10 @@ jobs:
       - name: Clone GitOps Repository
         run: |
           git clone https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/rajudruva2/eks-gitops-config.git
-
+      - name: Verify Git Remote
+        run: |
+            cd eks-gitops-config
+            git remote -v 
       - name: Create GitOps Application Folder
         run: |
           mkdir -p eks-gitops-config/apps/${IMAGE_NAME}
