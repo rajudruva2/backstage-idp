@@ -58,23 +58,30 @@ steps:
 
   - name: Clone GitOps Repository
     run: |
-      git clone https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/<ORG_NAME>/backstage-idp.git
+      git clone https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/rajudruva2/eks-gitops-config.git
 
-  - name: Update Deployment Manifest
+  - name: Create Application Manifests
     run: |
-      cd backstage-idp
+      mkdir -p eks-gitops-config/apps/${IMAGE_NAME}
 
-      sed -i "s|image: .*|image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-${IMAGE_TAG}|g" environments/dev/deployment.yaml
+      cp -r k8s/* \
+        eks-gitops-config/apps/${IMAGE_NAME}/
 
-  - name: Commit and Push Changes
+  - name: Update Deployment Image
     run: |
-      cd backstage-idp
+      sed -i \
+      "s|image: .*|image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-latest|g" \
+      eks-gitops-config/apps/${IMAGE_NAME}/deployment.yaml
+
+  - name: Commit and Push GitOps Changes
+    run: |
+      cd eks-gitops-config
 
       git config user.name "github-actions"
       git config user.email "github-actions@github.com"
 
       git add .
-      git commit -m "Update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
+
+      git commit -m "Deploy ${IMAGE_NAME}" || echo "No changes"
 
       git push origin main
-
