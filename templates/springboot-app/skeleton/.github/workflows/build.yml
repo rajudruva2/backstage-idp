@@ -37,6 +37,22 @@ jobs:
           role-to-assume: arn:aws:iam::443407534093:role/GitHubActionsECRPushRole
           aws-region: us-east-1
 
+      - name: Get GitOps Token From Secrets Manager
+        run: |
+          TOKEN=$(aws secretsmanager get-secret-value \
+            --secret-id github/gitops-token \
+            --query SecretString \
+            --output text)
+
+          echo "GITOPS_TOKEN=$TOKEN" >> $GITHUB_ENV
+
+      - name: Verify Secret Access
+        run: |
+          aws secretsmanager get-secret-value \
+            --secret-id github/gitops-token \
+            --query Name \
+            --output text
+
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
@@ -50,15 +66,7 @@ jobs:
           docker build \
             -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-${IMAGE_TAG} \
             -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-latest .
-           
-      - name: Verify GitHub Token
-        env:
-          GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
-        run: |
-          curl -s \
-            -H "Authorization: token $GITOPS_TOKEN" \
-            https://api.github.com/user
-            
+
       - name: Push Docker Images
         run: |
           docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-${IMAGE_TAG}
@@ -66,11 +74,8 @@ jobs:
 
       - name: Clone GitOps Repository
         run: |
-          git clone https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/rajudruva2/eks-gitops-config.git
-      - name: Verify Git Remote
-        run: |
-            cd eks-gitops-config
-            git remote -v 
+          git clone https://x-access-token:$GITOPS_TOKEN@github.com/rajudruva2/eks-gitops-config.git
+
       - name: Create GitOps Application Folder
         run: |
           mkdir -p eks-gitops-config/apps/${IMAGE_NAME}
@@ -81,19 +86,7 @@ jobs:
           sed -i "s|IMAGE_PLACEHOLDER|$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-latest|g" \
           eks-gitops-config/apps/${IMAGE_NAME}/deployment.yaml
 
-      
-      - name: Check Secret Exists
-        run: |
-           if [ -z "${{ secrets.GITOPS_TOKEN }}" ]; then
-              echo "SECRET NOT FOUND"
-              exit 1
-           else
-            echo "SECRET FOUND"
-           fi
-      
       - name: Commit and Push GitOps Changes
-        env:
-          GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
         run: |
           cd eks-gitops-config
 
@@ -104,16 +97,6 @@ jobs:
 
           git commit -m "Deploy ${IMAGE_NAME}" || echo "No changes"
 
-          if [ -z "$GITOPS_TOKEN" ]; then
-            echo "GITOPS_TOKEN EMPTY INSIDE PUSH STEP"
-            exit 1
-          else
-            echo "GITOPS_TOKEN AVAILABLE INSIDE PUSH STEP"
-          fi
-
           git remote set-url origin https://x-access-token:$GITOPS_TOKEN@github.com/rajudruva2/eks-gitops-config.git
-
-          echo "=== REMOTE CONFIGURED ==="
-          git remote -v
 
           git push origin HEAD:main
