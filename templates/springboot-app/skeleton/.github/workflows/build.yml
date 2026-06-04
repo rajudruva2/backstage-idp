@@ -63,14 +63,11 @@ steps:
   - name: Create Application Manifests
     run: |
       mkdir -p eks-gitops-config/apps/${IMAGE_NAME}
-
-      cp -r k8s/* \
-        eks-gitops-config/apps/${IMAGE_NAME}/
+      cp -r k8s/* eks-gitops-config/apps/${IMAGE_NAME}/
 
   - name: Update Deployment Image
     run: |
-      sed -i \
-      "s|image: .*|image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-latest|g" \
+      sed -i "s|IMAGE_PLACEHOLDER|$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-latest|g" \
       eks-gitops-config/apps/${IMAGE_NAME}/deployment.yaml
 
   - name: Commit and Push GitOps Changes
