@@ -1,4 +1,4 @@
-name: Build, Push to ECR and Update GitOps Repo
+name: Build and Push to ECR
 
 on:
 push:
@@ -15,18 +15,18 @@ runs-on: ubuntu-latest
 
 env:
   AWS_REGION: us-east-1
-  AWS_ACCOUNT_ID: 443407534093
+  AWS_ACCOUNT_ID: "443407534093"
   ECR_REPOSITORY: springboot
 
 steps:
-  - name: Checkout Source Code
+  - name: Checkout Source
     uses: actions/checkout@v4
 
   - name: Setup Java
     uses: actions/setup-java@v4
     with:
       distribution: temurin
-      java-version: 17
+      java-version: '17'
 
   - name: Build JAR
     run: mvn clean package
@@ -40,7 +40,7 @@ steps:
   - name: Login to Amazon ECR
     uses: aws-actions/amazon-ecr-login@v2
 
-  - name: Set Variables
+  - name: Set Image Variables
     run: |
       echo "IMAGE_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
       echo "IMAGE_TAG=${GITHUB_SHA}" >> $GITHUB_ENV
@@ -51,34 +51,8 @@ steps:
         -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-${IMAGE_TAG} \
         -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-latest .
 
-  - name: Push Docker Image
+  - name: Push Docker Images
     run: |
       docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-${IMAGE_TAG}
       docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-latest
 
-  - name: Clone GitOps Repository
-    run: |
-      git clone https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/rajudruva2/eks-gitops-config.git
-
-  - name: Create Application Manifests
-    run: |
-      mkdir -p eks-gitops-config/apps/${IMAGE_NAME}
-      cp -r k8s/* eks-gitops-config/apps/${IMAGE_NAME}/
-
-  - name: Update Deployment Image
-    run: |
-      sed -i "s|IMAGE_PLACEHOLDER|$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-latest|g" \
-      eks-gitops-config/apps/${IMAGE_NAME}/deployment.yaml
-
-  - name: Commit and Push GitOps Changes
-    run: |
-      cd eks-gitops-config
-
-      git config user.name "github-actions"
-      git config user.email "github-actions@github.com"
-
-      git add .
-
-      git commit -m "Deploy ${IMAGE_NAME}" || echo "No changes"
-
-      git push origin main
