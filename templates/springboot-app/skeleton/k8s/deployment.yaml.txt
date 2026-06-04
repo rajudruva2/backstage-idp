@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${{ values.appName }}
+  namespace: ${{ values.appName }}
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: ${{ values.appName }}
+
+  template:
+    metadata:
+      labels:
+        app: ${{ values.appName }}
+
+    spec:
+      containers:
+      - name: ${{ values.appName }}
+
+        image: rajvam6806/${{ values.appName }}:latest
+
+        ports:
+        - containerPort: 8080
