@@ -50,24 +50,29 @@ jobs:
           docker build \
             -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-${IMAGE_TAG} \
             -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-latest .
-           
-      - name: Verify GitHub Token
-        run: |
-            curl -H "Authorization: token ${{ secrets.GITOPS_TOKEN }}" \
-            https://api.github.com/repos/rajudruva2/eks-gitops-config
-            
+
       - name: Push Docker Images
         run: |
           docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-${IMAGE_TAG}
           docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-latest
 
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_PRIVATE_KEY }}
+
+      - name: Verify GitHub App Access
+        run: |
+          curl -s \
+          -H "Authorization: Bearer ${{ steps.app-token.outputs.token }}" \
+          https://api.github.com/repos/rajudruva2/eks-gitops-config
+
       - name: Clone GitOps Repository
         run: |
-          git clone https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/rajudruva2/eks-gitops-config.git
-      - name: Verify Git Remote
-        run: |
-            cd eks-gitops-config
-            git remote -v 
+          git clone https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/rajudruva2/eks-gitops-config.git
+
       - name: Create GitOps Application Folder
         run: |
           mkdir -p eks-gitops-config/apps/${IMAGE_NAME}
@@ -78,11 +83,6 @@ jobs:
           sed -i "s|IMAGE_PLACEHOLDER|$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-latest|g" \
           eks-gitops-config/apps/${IMAGE_NAME}/deployment.yaml
 
-      - name: Verify GitHub Token
-        run: |
-          curl -s \
-          -H "Authorization: Bearer ${{ secrets.GITOPS_TOKEN }}" \
-          https://api.github.com/repos/rajudruva2/eks-gitops-config
       - name: Commit and Push GitOps Changes
         run: |
           cd eks-gitops-config
@@ -91,8 +91,9 @@ jobs:
           git config user.email "github-actions@github.com"
 
           git add .
+
           git commit -m "Deploy ${IMAGE_NAME}" || echo "No changes"
 
-          git remote set-url origin https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/rajudruva2/eks-gitops-config.git
-
-          git push origin main
+          git push \
+          https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/rajudruva2/eks-gitops-config.git \
+          main
