@@ -20,7 +20,7 @@ spec:
       containers:
       - name: ${{ values.appName }}
 
-        image: rajvam6806/${{ values.appName }}:latest
+        image: 443407534093.dkr.ecr.us-east-1.amazonaws.com/springboot:${{ values.appName }}-latest
 
         ports:
         - containerPort: 8080
