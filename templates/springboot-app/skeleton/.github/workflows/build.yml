@@ -50,7 +50,15 @@ jobs:
           docker build \
             -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-${IMAGE_TAG} \
             -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-latest .
-
+      - name: Verify Git Remote
+        run: |
+            cd eks-gitops-config
+            git remote -v      
+      - name: Verify GitHub Token
+        run: |
+            curl -H "Authorization: token ${{ secrets.GITOPS_TOKEN }}" \
+            https://api.github.com/repos/rajudruva2/eks-gitops-config
+            
       - name: Push Docker Images
         run: |
           docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-${IMAGE_TAG}
@@ -79,4 +87,7 @@ jobs:
 
           git add .
           git commit -m "Deploy ${IMAGE_NAME}" || echo "No changes"
+
+          git remote set-url origin https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/rajudruva2/eks-gitops-config.git
+
           git push origin main
