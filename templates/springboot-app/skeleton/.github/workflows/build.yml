@@ -82,6 +82,15 @@ jobs:
           eks-gitops-config/apps/${IMAGE_NAME}/deployment.yaml
 
       
+      - name: Check Secret Exists
+        run: |
+           if [ -z "${{ secrets.GITOPS_TOKEN }}" ]; then
+              echo "SECRET NOT FOUND"
+              exit 1
+           else
+            echo "SECRET FOUND"
+           fi
+      
       - name: Commit and Push GitOps Changes
         env:
           GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
@@ -92,10 +101,19 @@ jobs:
           git config user.email "github-actions@github.com"
 
           git add .
+
           git commit -m "Deploy ${IMAGE_NAME}" || echo "No changes"
+
+          if [ -z "$GITOPS_TOKEN" ]; then
+            echo "GITOPS_TOKEN EMPTY INSIDE PUSH STEP"
+            exit 1
+          else
+            echo "GITOPS_TOKEN AVAILABLE INSIDE PUSH STEP"
+          fi
 
           git remote set-url origin https://x-access-token:$GITOPS_TOKEN@github.com/rajudruva2/eks-gitops-config.git
 
+          echo "=== REMOTE CONFIGURED ==="
           git remote -v
 
           git push origin HEAD:main
