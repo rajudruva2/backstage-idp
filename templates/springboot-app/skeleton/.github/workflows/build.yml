@@ -78,6 +78,11 @@ jobs:
           sed -i "s|IMAGE_PLACEHOLDER|$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${IMAGE_NAME}-latest|g" \
           eks-gitops-config/apps/${IMAGE_NAME}/deployment.yaml
 
+      - name: Verify GitHub Token
+        run: |
+          curl -s \
+          -H "Authorization: Bearer ${{ secrets.GITOPS_TOKEN }}" \
+          https://api.github.com/repos/rajudruva2/eks-gitops-config
       - name: Commit and Push GitOps Changes
         run: |
           cd eks-gitops-config
